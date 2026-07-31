@@ -1,0 +1,28 @@
+name: mis-backend-epic4 CI
+
+on:
+  push:
+    paths:
+      - 'mis-backend-epic4/**'
+  pull_request:
+    paths:
+      - 'mis-backend-epic4/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mis-backend-epic4
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build and test
+        run: mvn -B clean verify
