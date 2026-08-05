@@ -1,0 +1,2 @@
+package com.mis.mis_backend.grade;
+import jakarta.persistence.*;@Entity @Table(name="grades") public class Grade{@Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Column(name="grade_id") private Integer gradeId;@Column(name="exam_id") private Integer examId;@Column(name="student_id") private Integer studentId;@Column(name="marks_obtained") private Integer marksObtained;@Column(name="grade") private String grade;public Grade(){} }

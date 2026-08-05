@@ -1,0 +1,1 @@
+package com.mis.mis_backend.examination;import org.springframework.stereotype.Service;import java.util.*;@Service public class ExaminationService{private final ExaminationRepository r;public ExaminationService(ExaminationRepository r){this.r=r;}public List<Examination> getAll(){return r.findAll();}public Examination create(Examination x){return r.save(x);}}

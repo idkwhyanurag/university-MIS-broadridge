@@ -1,0 +1,1 @@
+package com.mis.mis_backend.examination;import org.springframework.data.jpa.repository.JpaRepository;public interface ExaminationRepository extends JpaRepository<Examination,Integer>{}

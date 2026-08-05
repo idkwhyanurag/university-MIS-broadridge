@@ -1,0 +1,1 @@
+package com.mis.mis_backend.course;import org.springframework.stereotype.Service;import java.util.*;@Service public class CourseService{private final CourseRepository r;public CourseService(CourseRepository r){this.r=r;}public List<Course> getAllCourses(){return r.findAll();}public Course createCourse(Course c){return r.save(c);}}

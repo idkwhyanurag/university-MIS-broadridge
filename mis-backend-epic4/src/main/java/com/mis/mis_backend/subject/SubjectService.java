@@ -1,0 +1,1 @@
+package com.mis.mis_backend.subject;import org.springframework.stereotype.Service;import java.util.*;@Service public class SubjectService{private final SubjectRepository r;public SubjectService(SubjectRepository r){this.r=r;}public List<Subject> getAllSubjects(){return r.findAll();}public Subject createSubject(Subject s){return r.save(s);}}
