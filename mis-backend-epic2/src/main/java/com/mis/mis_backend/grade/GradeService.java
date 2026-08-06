@@ -1,0 +1,1 @@
+package com.mis.mis_backend.grade;import org.springframework.stereotype.Service;import java.util.*;@Service public class GradeService{private final GradeRepository r;public GradeService(GradeRepository r){this.r=r;}public List<Grade> getAll(){return r.findAll();}public Grade create(Grade x){return r.save(x);}}
