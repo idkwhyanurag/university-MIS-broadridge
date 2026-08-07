@@ -1,0 +1,32 @@
+.card {
+  position: relative;
+  background: #fff;
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  overflow: hidden;
+}
+
+.card-tab {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 28px;
+  height: 6px;
+  border-bottom-right-radius: var(--radius-sm);
+  background: var(--slate-300);
+}
+
+.card[data-tab="academics"] .card-tab { background: var(--ink-800); }
+.card[data-tab="hostel"] .card-tab { background: var(--ledger-600); }
+.card[data-tab="comms"] .card-tab { background: var(--crimson-600); }
+.card[data-tab="admin"] .card-tab { background: var(--slate-500); }
+
+.card-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--slate-600);
+  margin-bottom: var(--space-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

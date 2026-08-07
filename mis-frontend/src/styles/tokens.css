@@ -1,0 +1,57 @@
+/* ============================================
+   Design tokens — University MIS
+   Academic ledger aesthetic: ink, parchment, brass
+   ============================================ */
+:root {
+  /* Core palette */
+  --ink-900: #14213D;
+  --ink-800: #1C2C4D;
+  --ink-700: #26375F;
+  --parchment-50: #FAF7EF;
+  --parchment-100: #F3EEE0;
+  --brass-500: #B08D57;
+  --brass-400: #C4A374;
+  --brass-100: #EFE4D0;
+  --slate-600: #4A5670;
+  --slate-500: #5C6B85;
+  --slate-300: #9AA5B8;
+  --slate-100: #E4E8EF;
+  --ledger-600: #3F6B4F;
+  --ledger-100: #E1EBE4;
+  --crimson-600: #A13D3D;
+  --crimson-100: #F3E1E1;
+
+  /* Epic group accents (card catalog tab colors) */
+  --tab-academics: var(--ink-800);
+  --tab-admin: var(--slate-500);
+  --tab-hostel: var(--ledger-600);
+  --tab-comms: var(--crimson-600);
+
+  /* Type */
+  --font-display: 'Source Serif 4', Georgia, serif;
+  --font-body: 'IBM Plex Sans', -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-8: 48px;
+
+  /* Structure */
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --sidebar-width: 260px;
+  --topbar-height: 64px;
+  --border-hairline: 1px solid var(--slate-100);
+}

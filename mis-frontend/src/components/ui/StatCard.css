@@ -1,0 +1,43 @@
+.stat-card {
+  position: relative;
+  background: #fff;
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  overflow: hidden;
+}
+
+.stat-card .card-tab {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 28px;
+  height: 6px;
+  border-bottom-right-radius: var(--radius-sm);
+  background: var(--slate-300);
+}
+
+.stat-card[data-tab="academics"] .card-tab { background: var(--ink-800); }
+.stat-card[data-tab="hostel"] .card-tab { background: var(--ledger-600); }
+.stat-card[data-tab="comms"] .card-tab { background: var(--crimson-600); }
+.stat-card[data-tab="admin"] .card-tab { background: var(--slate-500); }
+
+.stat-value {
+  font-size: var(--text-2xl);
+  font-weight: 500;
+  color: var(--ink-900);
+  line-height: 1;
+  margin-top: var(--space-2);
+}
+
+.stat-label {
+  font-size: var(--text-sm);
+  color: var(--slate-600);
+  margin-top: var(--space-2);
+}
+
+.stat-hint {
+  font-size: var(--text-xs);
+  color: var(--slate-300);
+  margin-top: var(--space-1);
+}
