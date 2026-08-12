@@ -44,6 +44,8 @@ jobs:
       contents: read
     env:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       S3_BUCKET: ${{ secrets.S3_BUCKET }}
       REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
       CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
@@ -54,14 +56,21 @@ jobs:
           node-version: "20"
           cache: npm
           cache-dependency-path: mis-frontend/package-lock.json
-      - name: Configure AWS credentials
-        if: env.AWS_ROLE_ARN != ''
+      - name: Configure AWS credentials (access keys)
+        if: env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+      - name: Configure AWS credentials (OIDC)
+        if: env.AWS_ACCESS_KEY_ID == '' && env.AWS_ROLE_ARN != ''
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
       - name: Build and sync to S3
-        if: env.AWS_ROLE_ARN != '' && env.S3_BUCKET != ''
+        if: (env.AWS_ACCESS_KEY_ID != '' || env.AWS_ROLE_ARN != '') && env.S3_BUCKET != ''
         working-directory: mis-frontend
         run: |
           npm ci

@@ -23,7 +23,8 @@ gh secret set AWS_ROLE_ARN --body "arn:aws:iam::ACCOUNT_ID:role/GitHubActionsMis
 | Secret | `ECR_REPOSITORY` | from `infra/out/ecr.env` → `ECR_REPO` |
 | Secret | `S3_BUCKET` | from `infra/out/frontend.env` |
 | Secret | `REACT_APP_API_URL` | `http://<ElasticIP>:8080/api` (EC2 API; pin with EIP) |
-| Secret | `AWS_ROLE_ARN` | IAM role trusting `token.actions.githubusercontent.com` |
+| Secret | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | IAM user `github-actions-mis` (preferred on Free tier) |
+| Secret | `AWS_ROLE_ARN` | Optional OIDC role; used only if access keys are unset |
 | Secret | `EC2_HOST` | Elastic IP / public IP of the API instance |
 | Secret | `EC2_SSH_KEY` | Full PEM private key contents (same key as `EC2_PEM`) |
 | Secret | `CLOUDFRONT_DISTRIBUTION_ID` | **Optional.** Real CloudFront ID only. Omit or leave empty for S3 website; do **not** set `n/a-s3-website` |
