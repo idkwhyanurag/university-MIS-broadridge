@@ -100,15 +100,18 @@ Frontend: `REACT_APP_API_URL` (default `http://localhost:8080/api`).
 
 ## AWS deployment (practical)
 
-See [`infra/deploy.sh`](infra/deploy.sh):
+Full step-by-step + one-command scripts: **[infra/CLOUD_DEPLOY.md](infra/CLOUD_DEPLOY.md)**
 
-1. Build/push backend image to **ECR**
-2. Run container on **App Runner** with RDS env vars + health `/actuator/health`
-3. Build React with production `REACT_APP_API_URL` → sync to **S3**
-4. Put **CloudFront** in front of S3 (SPA fallback to `index.html`)
-5. Set `CORS_ORIGINS` to the CloudFront URL
+```bash
+aws configure
+chmod +x infra/*.sh
+./infra/deploy-all.sh   # RDS → ECR → App Runner → S3/CloudFront → CORS
+```
 
-GitHub Actions: [`.github/workflows/backend.yml`](.github/workflows/backend.yml) and [`frontend.yml`](.github/workflows/frontend.yml). Configure secrets `AWS_ROLE_ARN`, `AWS_REGION`, `ECR_REPOSITORY`, `S3_BUCKET`, `CLOUDFRONT_DISTRIBUTION_ID`, `REACT_APP_API_URL` when ready to deploy.
+Outputs (gitignored): `infra/out/*.env`  
+Public site URL: `infra/out/frontend.env` → `CLOUDFRONT_DOMAIN`
+
+GitHub Actions: [`.github/workflows/backend.yml`](.github/workflows/backend.yml) and [`frontend.yml`](.github/workflows/frontend.yml). After first deploy run `./infra/06-github-secrets.sh` (or `--apply` with `gh`).
 
 ## Project layout
 

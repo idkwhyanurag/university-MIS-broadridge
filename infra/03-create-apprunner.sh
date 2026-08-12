@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+# Create / update AWS App Runner service for the MIS API.
+# Prerequisites: infra/out/rds.env and infra/out/ecr.env from prior scripts.
+# Usage: ./infra/03-create-apprunner.sh
+
+set -euo pipefail
+
+AWS_REGION="${AWS_REGION:-us-east-1}"
+SERVICE_NAME="${SERVICE_NAME:-university-mis-api}"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# shellcheck disable=SC1091
+source "$ROOT/infra/out/rds.env"
+# shellcheck disable=SC1091
+source "$ROOT/infra/out/ecr.env"
+
+JWT_SECRET="${JWT_SECRET:-$(openssl rand -base64 48 | tr -d '\n')}"
+CORS_ORIGINS="${CORS_ORIGINS:-http://localhost:3000,http://localhost:3002}"
+
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+ROLE_NAME="AppRunnerECRAccessRole-mis"
+ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/${ROLE_NAME}"
+
+echo "==> Ensure IAM role $ROLE_NAME for App Runner → ECR"
+if ! aws iam get-role --role-name "$ROLE_NAME" >/dev/null 2>&1; then
+  cat > /tmp/apprunner-trust.json <<'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": { "Service": "build.apprunner.amazonaws.com" },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+  aws iam create-role --role-name "$ROLE_NAME" \
+    --assume-role-policy-document file:///tmp/apprunner-trust.json >/dev/null
+  aws iam attach-role-policy --role-name "$ROLE_NAME" \
+    --policy-arn arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess
+  echo "==> Waiting for IAM role propagation..."
+  sleep 15
+fi
+
+RUNTIME_ENV=$(cat <<EOF
+[
+  {"Name":"DB_URL","Value":"$DB_URL"},
+  {"Name":"DB_USER","Value":"$DB_USER"},
+  {"Name":"DB_PASSWORD","Value":"$DB_PASSWORD"},
+  {"Name":"JWT_SECRET","Value":"$JWT_SECRET"},
+  {"Name":"CORS_ORIGINS","Value":"$CORS_ORIGINS"},
+  {"Name":"PORT","Value":"8080"}
+]
+EOF
+)
+
+EXISTING=$(aws apprunner list-services --region "$AWS_REGION" \
+  --query "ServiceSummaryList[?ServiceName=='$SERVICE_NAME'].ServiceArn | [0]" \
+  --output text 2>/dev/null || echo "None")
+
+if [[ -z "$EXISTING" || "$EXISTING" == "None" ]]; then
+  echo "==> Creating App Runner service $SERVICE_NAME"
+  CREATE_OUT=$(aws apprunner create-service --region "$AWS_REGION" \
+    --service-name "$SERVICE_NAME" \
+    --source-configuration "{
+      \"AuthenticationConfiguration\": {\"AccessRoleArn\": \"$ROLE_ARN\"},
+      \"AutoDeploymentsEnabled\": true,
+      \"ImageRepository\": {
+        \"ImageIdentifier\": \"$ECR_IMAGE\",
+        \"ImageRepositoryType\": \"ECR\",
+        \"ImageConfiguration\": {
+          \"Port\": \"8080\",
+          \"RuntimeEnvironmentVariables\": {
+            \"DB_URL\": \"$DB_URL\",
+            \"DB_USER\": \"$DB_USER\",
+            \"DB_PASSWORD\": \"$DB_PASSWORD\",
+            \"JWT_SECRET\": \"$JWT_SECRET\",
+            \"CORS_ORIGINS\": \"$CORS_ORIGINS\",
+            \"PORT\": \"8080\"
+          }
+        }
+      }
+    }" \
+    --health-check-configuration '{
+      "Protocol": "HTTP",
+      "Path": "/actuator/health",
+      "Interval": 10,
+      "Timeout": 5,
+      "HealthyThreshold": 1,
+      "UnhealthyThreshold": 5
+    }' \
+    --instance-configuration '{"Cpu":"1024","Memory":"2048"}')
+  SERVICE_ARN=$(echo "$CREATE_OUT" | python3 -c "import sys,json; print(json.load(sys.stdin)['Service']['ServiceArn'])")
+else
+  SERVICE_ARN="$EXISTING"
+  echo "==> App Runner service exists: $SERVICE_ARN"
+fi
+
+echo "==> Waiting for service RUNNING (can take several minutes)..."
+for i in $(seq 1 60); do
+  STATUS=$(aws apprunner describe-service --region "$AWS_REGION" --service-arn "$SERVICE_ARN" \
+    --query 'Service.Status' --output text)
+  echo "    status=$STATUS ($i/60)"
+  [[ "$STATUS" == "RUNNING" ]] && break
+  [[ "$STATUS" == "CREATE_FAILED" || "$STATUS" == "DELETE_FAILED" ]] && exit 1
+  sleep 20
+done
+
+SERVICE_URL=$(aws apprunner describe-service --region "$AWS_REGION" --service-arn "$SERVICE_ARN" \
+  --query 'Service.ServiceUrl' --output text)
+
+mkdir -p "$ROOT/infra/out"
+cat > "$ROOT/infra/out/apprunner.env" <<EOF
+AWS_REGION=$AWS_REGION
+SERVICE_NAME=$SERVICE_NAME
+SERVICE_ARN=$SERVICE_ARN
+SERVICE_URL=https://$SERVICE_URL
+API_BASE=https://$SERVICE_URL/api
+JWT_SECRET=$JWT_SECRET
+CORS_ORIGINS=$CORS_ORIGINS
+EOF
+
+echo "==> Wrote infra/out/apprunner.env"
+echo "    SERVICE_URL=https://$SERVICE_URL"
+
+echo "==> Smoke health"
+curl -fsS "https://$SERVICE_URL/actuator/health" || true
+echo
+echo "==> Smoke login"
+curl -fsS -X POST "https://$SERVICE_URL/api/auth/login" \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"admin@mis.edu","password":"Admin@123"}' || true
+echo

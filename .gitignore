@@ -25,3 +25,6 @@ target/
 application-local.properties
 *.log
 application.properties
+
+# Cloud deploy outputs contain DB passwords / JWT secrets
+infra/out/
