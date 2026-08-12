@@ -33,6 +33,11 @@ public class CourseController {
         return ResponseEntity.ok(courseService.getById(id));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Course> update(@PathVariable Long id, @Valid @RequestBody CourseRequest request) {
+        return ResponseEntity.ok(courseService.update(id, request));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         courseService.delete(id);

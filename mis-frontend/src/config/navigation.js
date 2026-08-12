@@ -32,6 +32,15 @@ export const NAV_GROUPS = [
     ],
   },
   {
+    id: 'resources',
+    label: 'Resources',
+    tab: 'admin',
+    items: [
+      { label: 'Library', path: '/library', roles: ['admin', 'teacher'] },
+      { label: 'Inventory', path: '/inventory', roles: ['admin'] },
+    ],
+  },
+  {
     id: 'comms',
     label: 'Communication',
     tab: 'comms',

@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: mis-backend
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/university_mis?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:root}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    show-sql: false
+  mail:
+    host: ${MAIL_HOST:sandbox.smtp.mailtrap.io}
+    port: ${MAIL_PORT:2525}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+
+server:
+  port: ${PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+  health:
+    mail:
+      enabled: false
+    db:
+      enabled: true
+    diskspace:
+      enabled: false
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:UniversityMisJwtSecretKeyChangeMeInProduction2026!!}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  cors:
+    origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:5173}

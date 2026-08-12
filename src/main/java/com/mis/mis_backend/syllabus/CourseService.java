@@ -35,6 +35,16 @@ public class CourseService {
                 .orElseThrow(() -> new IllegalArgumentException("Course not found: " + id));
     }
 
+    public Course update(Long id, CourseRequest request) {
+        Course existing = getById(id);
+        existing.setCourseCode(request.getCourseCode());
+        existing.setCourseName(request.getCourseName());
+        existing.setCredits(request.getCredits());
+        existing.setDepartment(request.getDepartment());
+        existing.setSemester(request.getSemester());
+        return courseRepository.save(existing);
+    }
+
     public void delete(Long id) {
         if (!courseRepository.existsById(id)) {
             throw new IllegalArgumentException("Course not found: " + id);

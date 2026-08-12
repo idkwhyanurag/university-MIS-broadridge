@@ -29,10 +29,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: var(--text-sm);
-  color: var(--brass-400);
+  font-size: 1.25rem;
+  line-height: 1;
   flex-shrink: 0;
 }
 

@@ -37,24 +37,42 @@ export default function Dashboard() {
           label="Upcoming Events"
           value={summary ? summary.upcomingEventsCount : "—"}
         />
-        <StatCard tab="academics" label="Students" value="—" hint="Awaiting Epic 1 data" />
-        <StatCard tab="hostel" label="Fee Collection" value="—" hint="Awaiting Epic 3 data" />
-        <StatCard tab="academics" label="Attendance" value="—" hint="Awaiting Epic 1 data" />
+        <StatCard
+          tab="academics"
+          label="Students"
+          value={summary ? summary.totalStudents : "—"}
+        />
+        <StatCard
+          tab="hostel"
+          label="Unpaid Fees"
+          value={summary ? summary.unpaidFees : "—"}
+        />
+        <StatCard
+          tab="admin"
+          label="Books"
+          value={summary ? summary.totalBooks : "—"}
+        />
       </section>
 
-      {error && (
-        <p className="dashboard-error">{error}</p>
-      )}
+      {error && <p className="dashboard-error">{error}</p>}
 
       <section className="dashboard-grid">
-        <Card tab="comms" title="Recent Announcements">
-          <p className="muted">Wire up the announcement feed here in the next stage.</p>
+        <Card tab="comms" title="Communication pulse">
+          <p className="muted">
+            {summary
+              ? `${summary.totalAnnouncements} announcements and ${summary.upcomingEventsCount} upcoming events.`
+              : "Loading communication summary…"}
+          </p>
         </Card>
-        <Card tab="academics" title="Attendance Summary">
-          <p className="muted">Connects to Epic 1 once its endpoints are available.</p>
+        <Card tab="academics" title="Enrollment">
+          <p className="muted">
+            {summary ? `${summary.totalStudents} students currently on record.` : "Loading enrollment…"}
+          </p>
         </Card>
         <Card tab="hostel" title="Fee Summary">
-          <p className="muted">Connects to Epic 3's fee module.</p>
+          <p className="muted">
+            {summary ? `${summary.unpaidFees} unpaid fee records.` : "Loading fee summary…"}
+          </p>
         </Card>
       </section>
     </div>

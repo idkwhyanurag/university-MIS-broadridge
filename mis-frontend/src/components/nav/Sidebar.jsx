@@ -1,14 +1,21 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { NAV_GROUPS } from "../../config/navigation";
-import { useRole } from "../../context/RoleContext";
+import { useAuth } from "../../context/AuthContext";
 import "./Sidebar.css";
 
-const DEFAULT_OPEN = { academics: true, hostel: true, comms: true, admin: false };
+const DEFAULT_OPEN = {
+  academics: true,
+  hostel: true,
+  resources: true,
+  comms: true,
+  admin: false,
+};
 
 export default function Sidebar() {
   const [open, setOpen] = useState(DEFAULT_OPEN);
-  const { role } = useRole();
+  const { navRole } = useAuth();
+  const role = navRole || "student";
 
   const toggle = (id) => setOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -17,7 +24,7 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-crest">
-        <div className="crest-mark">UM</div>
+        <div className="crest-mark" aria-hidden="true">🎓</div>
         <div className="crest-text">
           <div className="crest-title">University MIS</div>
           <div className="crest-subtitle">Records &amp; Administration</div>

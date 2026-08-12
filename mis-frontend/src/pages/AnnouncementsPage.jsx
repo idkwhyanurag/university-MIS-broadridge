@@ -2,18 +2,15 @@ import React, { useEffect, useState } from "react";
 import { getAnnouncements, createAnnouncement, deleteAnnouncement } from "../services/announcementService";
 import Card from "../components/ui/Card";
 import EmptyState from "../components/ui/EmptyState";
-import { useRole } from "../context/RoleContext";
+import { useAuth } from "../context/AuthContext";
 import "./AnnouncementsPage.css";
 
-// Maps this app's demo roles to the backend's TargetRole enum
-// (STUDENT / FACULTY / ALL). Admin is treated as FACULTY for
-// posting rights and sees everything via 'ALL'.
 const ROLE_TO_BACKEND = { student: "STUDENT", teacher: "FACULTY", admin: "ALL" };
 const CAN_POST = { student: false, teacher: true, admin: true };
-const MOCK_USER_ID = 1;
 
 export default function AnnouncementsPage() {
-  const { role } = useRole();
+  const { navRole, userId } = useAuth();
+  const role = navRole || "student";
   const backendRole = ROLE_TO_BACKEND[role];
   const canPost = CAN_POST[role];
 
@@ -36,7 +33,7 @@ export default function AnnouncementsPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    createAnnouncement(MOCK_USER_ID, title, body, targetRole).then(() => {
+    createAnnouncement(userId, title, body, targetRole).then(() => {
       setTitle("");
       setBody("");
       load();

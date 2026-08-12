@@ -1,18 +1,28 @@
 import React from "react";
-import RoleSwitcher from "./RoleSwitcher";
-import { useRole } from "../../context/RoleContext";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import "./Topbar.css";
-
-const NAMES = {
-  admin: "Anurag Majumdar",
-  teacher: "Faculty Member",
-  student: "Student User",
-};
+import "../../styles/crud.css";
 
 export default function Topbar() {
-  const { role } = useRole();
-  const name = NAMES[role];
-  const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+  const { displayName, navRole, logout, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  if (!isAuthenticated) return null;
+
+  const name = displayName || "User";
+  const roleLabel = navRole ? navRole[0].toUpperCase() + navRole.slice(1) : "";
+  const initials = name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <header className="topbar">
@@ -20,8 +30,7 @@ export default function Topbar() {
         <input type="search" placeholder="Search students, courses, records..." aria-label="Search" />
       </div>
       <div className="topbar-actions">
-        <RoleSwitcher />
-        <button className="icon-btn" aria-label="Notifications">
+        <button className="icon-btn" aria-label="Notifications" onClick={() => navigate("/notifications")}>
           <span className="dot" />
           &#128276;
         </button>
@@ -29,9 +38,12 @@ export default function Topbar() {
           <div className="user-avatar">{initials}</div>
           <div className="user-meta">
             <div className="user-name">{name}</div>
-            <div className="user-role">{role[0].toUpperCase() + role.slice(1)}</div>
+            <div className="user-role">{roleLabel}</div>
           </div>
         </div>
+        <button type="button" className="topbar-logout" onClick={handleLogout}>
+          Logout
+        </button>
       </div>
     </header>
   );

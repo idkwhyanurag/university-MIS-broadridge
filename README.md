@@ -1,448 +1,127 @@
-# 🎓 University Management Information System (University MIS)
+# University Management Information System (University MIS)
 
-A modern, full-stack **University Management Information System (MIS)** built using **Spring Boot**, **React.js**, and **MySQL**. The project is designed to streamline academic and administrative operations within a university through a modular architecture developed across multiple epics.
+Full-stack university MIS: **unified Spring Boot API** + **React** frontend, with JWT auth and a practical AWS deployment path (S3/CloudFront + App Runner + RDS).
 
----
-
-## 📌 Project Overview
-
-The University MIS provides a centralized platform for managing students, admissions, academics, faculty, hostel facilities, fees, library resources, notifications, events, and institutional analytics.
-
-The system follows a **modular architecture**, where each major feature set is developed as an independent backend module (Epic) and integrated into a unified frontend.
-
----
-
-## ✨ Features
-
-### 🎓 Student & Academic Management
-- Student Registration
-- Student Management
-- Admission Processing
-- Course Registration
-- Attendance Management
-- Timetable Management
-- Course Management
-
-### 👨‍🏫 Faculty & Department Management
-- Department Management
-- Faculty Management
-- Subject Management
-- Grade Management
-- Examination Management
-
-### 🏠 Hostel & Finance
-- Hostel Room Management
-- Hostel Allocation
-- Fee Management
-
-### 📚 Library Management
-- Book Management
-- Book Issue & Return
-
-### 📢 Communication
-- Notifications
-- Announcement Board
-- Event Calendar
-
-### 📊 Analytics Dashboard
-- Total Notifications
-- Total Announcements
-- Upcoming Events
-- Institutional Summary
-
----
-
-# 🏗 Project Architecture
+## Architecture
 
 ```
-University-MIS
-│
-├── src/                     # Epic 1 Backend
-│
-├── mis-backend-epic2/       # Academic Management
-│
-├── mis-backend-epic3/       # Hostel & Fee Management
-│
-├── mis-backend-epic4/       # Library, Notifications, Events, Analytics
-│
-└── mis-frontend/            # React Frontend
+Browser → React (mis-frontend)
+              ↓ JWT Bearer
+         Spring Boot (single API :8080)
+              ↓
+           MySQL (university_mis)
 ```
 
----
+Legacy epic folders (`mis-backend-epic2|3|4`) are archived source from the team split. **Run only the root backend.**
 
-# 🛠 Tech Stack
+## Tech stack
 
-## Backend
+| Layer | Stack |
+|-------|--------|
+| Backend | Java 21, Spring Boot 4.1, Security + JWT, JPA, MySQL |
+| Frontend | React (CRA), React Router, Axios |
+| Local | Docker Compose (MySQL + API) |
+| Cloud | S3 + CloudFront, App Runner (ECR image), RDS MySQL |
 
-- Java 21
-- Spring Boot
-- Spring MVC
-- Spring Data JPA
-- Hibernate
-- Maven
-- MySQL
+## Quick start (local)
 
-## Frontend
-
-- React.js
-- Axios
-- CSS3
-
-## Database
-
-- MySQL
-
-## Version Control
-
-- Git
-- GitHub
-
----
-
-# 📂 Epic Breakdown
-
-## ✅ Epic 1 — Student Information Management
-
-Features
-
-- Student CRUD
-- Admissions
-- Attendance
-- Course Registration
-- Timetable
-- Course Management
-
----
-
-## ✅ Epic 2 — Academic Administration
-
-Features
-
-- Department Management
-- Faculty Management
-- Subjects
-- Grades
-- Examination Management
-
----
-
-## ✅ Epic 3 — Hostel & Finance
-
-Features
-
-- Hostel Rooms
-- Hostel Allocation
-- Fee Management
-
----
-
-## ✅ Epic 4 — Campus Services & Communication
-
-Features
-
-- Library Management
-- Inventory Management
-- Notifications
-- Announcement Board
-- Event Calendar
-- Analytics Dashboard
-
----
-
-# 📡 REST APIs
-
-## Student
-
-```
-POST    /students
-GET     /students
-PUT     /students/{id}
-DELETE  /students/{id}
-```
-
-## Admission
-
-```
-POST    /admissions
-GET     /admissions
-PUT     /admissions/{id}
-```
-
-## Attendance
-
-```
-POST    /attendance
-GET     /attendance
-```
-
-## Department
-
-```
-POST    /departments
-GET     /departments
-PUT     /departments/{id}
-DELETE  /departments/{id}
-```
-
-## Faculty
-
-```
-POST    /faculty
-GET     /faculty
-```
-
-## Hostel
-
-```
-POST    /hostel
-GET     /hostel
-```
-
-## Fee
-
-```
-POST    /fees
-GET     /fees
-```
-
-## Library
-
-```
-POST    /books
-GET     /books
-```
-
-## Notifications
-
-```
-POST    /api/notifications
-
-GET     /api/notifications/{userId}
-
-PUT     /api/notifications/{id}/read
-```
-
-## Announcements
-
-```
-POST    /api/announcements
-
-GET     /api/announcements
-```
-
-## Events
-
-```
-POST    /api/events
-
-GET     /api/events
-```
-
-## Analytics
-
-```
-GET     /api/analytics/summary
-```
-
----
-
-# 💻 Getting Started
-
-## 1. Clone Repository
+### 1. Backend + database
 
 ```bash
-git clone https://github.com/idkwhyanurag/university-MIS-broadridge.git
-
-cd university-MIS-broadridge
+docker compose up --build -d
 ```
 
----
+API: http://localhost:8080  
+Health: http://localhost:8080/actuator/health
 
-## 2. Configure Database
+### Demo profile (no MySQL)
 
-Create a MySQL database
-
-```sql
-CREATE DATABASE university_mis;
-```
-
-Copy
-
-```
-application-example.properties
-```
-
-to
-
-```
-application.properties
-```
-
-and update your local database credentials.
-
----
-
-## 3. Run Backend
-
-Example
+If Docker/MySQL are not available:
 
 ```bash
-cd mis-backend-epic4
-
-./mvnw spring-boot:run
+mvn spring-boot:run -Dspring-boot.run.profiles=demo
 ```
 
-or
+Uses in-memory H2. Seed users still apply.
+
+If port 8080 is already taken by an old Java process, either kill it or run:
 
 ```bash
-mvn spring-boot:run
+mvn spring-boot:run -Dspring-boot.run.profiles=demo -Dspring-boot.run.arguments=--server.port=8083
 ```
 
-Repeat similarly for other backend modules if required.
-
----
-
-## 4. Run Frontend
+Then point the frontend at it:
 
 ```bash
 cd mis-frontend
+REACT_APP_API_URL=http://localhost:8083/api npm start
+# or: REACT_APP_API_URL=http://localhost:8083/api npm run build && python3 ../scripts/serve-frontend.py
+```
 
+### 2. Frontend
+
+```bash
+cd mis-frontend
 npm install
-
 npm start
 ```
 
----
+Open http://localhost:3000 — you will be redirected to login.
 
-Frontend
+### Demo users (seeded on first boot)
 
-```
-http://localhost:3000
-```
+| Email | Password | Role |
+|-------|----------|------|
+| admin@mis.edu | Admin@123 | ADMIN |
+| faculty@mis.edu | Faculty@123 | FACULTY |
+| student@mis.edu | Student@123 | STUDENT |
 
-Backend
+## Main API surface
 
-```
-http://localhost:8080
-```
+All routes under `/api` require `Authorization: Bearer <token>` except `POST /api/auth/login`.
 
----
+- Auth: `/api/auth/login`, `/api/auth/me`, `/api/auth/register` (ADMIN)
+- Academics: students, admissions, attendance, courses, registrations, timetable, departments, faculty, subjects, examinations, grades
+- Hostel & fees: `/api/fees`, `/api/hostels`, `/api/rooms`
+- Comms: notifications, announcements, events, analytics
+- Resources: `/api/library/books`, `/api/inventory`
 
-# 📷 Screens
+## Environment variables (backend)
 
-The application includes:
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `DB_URL` | localhost MySQL URL | JDBC URL |
+| `DB_USER` / `DB_PASSWORD` | root / root | DB credentials |
+| `JWT_SECRET` | (dev default) | HS256 signing key (change in prod) |
+| `CORS_ORIGINS` | localhost:3000,5173 | Comma-separated origins |
+| `PORT` | 8080 | HTTP port |
 
-- Dashboard
-- Student Management
-- Admissions
-- Attendance
-- Departments
-- Faculty
-- Courses
-- Hostel
-- Fees
-- Library
-- Notifications
-- Announcement Board
-- Event Calendar
-- Analytics Dashboard
+Frontend: `REACT_APP_API_URL` (default `http://localhost:8080/api`).
 
----
+## AWS deployment (practical)
 
-# 🧪 Testing
+See [`infra/deploy.sh`](infra/deploy.sh):
 
-Backend endpoints were verified using:
+1. Build/push backend image to **ECR**
+2. Run container on **App Runner** with RDS env vars + health `/actuator/health`
+3. Build React with production `REACT_APP_API_URL` → sync to **S3**
+4. Put **CloudFront** in front of S3 (SPA fallback to `index.html`)
+5. Set `CORS_ORIGINS` to the CloudFront URL
 
-- Postman
-- cURL
-- Browser
-- React Frontend Integration
+GitHub Actions: [`.github/workflows/backend.yml`](.github/workflows/backend.yml) and [`frontend.yml`](.github/workflows/frontend.yml). Configure secrets `AWS_ROLE_ARN`, `AWS_REGION`, `ECR_REPOSITORY`, `S3_BUCKET`, `CLOUDFRONT_DISTRIBUTION_ID`, `REACT_APP_API_URL` when ready to deploy.
 
----
-
-# 🔒 Security Notes
-
-Sensitive configuration files are intentionally excluded from version control.
-
-The repository only contains:
+## Project layout
 
 ```
-application-example.properties
+├── src/                    # Unified Spring Boot API
+├── mis-frontend/           # React SPA
+├── docker-compose.yml
+├── Dockerfile
+├── infra/deploy.sh
+├── mis-backend-epic2|3|4/  # Legacy epic archives (do not run)
+└── mis-frontend-stage2/    # Incomplete snapshot (ignore)
 ```
 
-Developers should create their own:
+## License / course
 
-```
-application.properties
-```
-
-with local database credentials.
-
----
-
-# 🚀 Future Improvements
-
-- JWT Authentication
-- Role-Based Access Control (RBAC)
-- Email Notifications
-- Password Encryption
-- File Uploads
-- Student Portal
-- Faculty Portal
-- Parent Portal
-- Admin Dashboard
-- Real-time Notifications
-- Dark Mode
-- Charts & Reports
-- Docker Deployment
-- CI/CD Pipeline
-- Cloud Deployment (AWS / Azure)
-
----
-
-# 👨‍💻 Contributors
-
-- **Anurag Majumdar**
-- **Ahinsha**
-- **Lipra Routray**
-
----
-
-# 📄 License
-
-This project was developed as part of an academic full-stack software engineering project.
-
----
-
-# ⭐ Acknowledgements
-
-Built using
-
-- Spring Boot
-- React.js
-- MySQL
-- Maven
-- GitHub
-
----
-
-> **University MIS** aims to provide a scalable, modular, and user-friendly platform for efficient university administration by integrating academic, administrative, financial, and communication services into a single unified system.
-
-
-## Local Database Setup (Team Standard)
-
-This project uses a shared local dev database convention so the app
-runs immediately after cloning, with zero config needed.
-
-Run this once after installing MySQL:
-
-```sql
-CREATE DATABASE university_mis;
-ALTER USER 'root'@'localhost' IDENTIFIED BY 'Anurag@1';
-FLUSH PRIVILEGES;
-```
-
-`application.properties` in each backend module is intentionally
-committed with these shared credentials — this database is local-only
-(never exposed to the internet), so this is a team dev convention,
-not a real secret.
+University MIS Broadridge team project.

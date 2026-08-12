@@ -2,20 +2,20 @@ import React, { useEffect, useState } from "react";
 import { getNotifications, markAsRead } from "../services/notificationService";
 import Card from "../components/ui/Card";
 import EmptyState from "../components/ui/EmptyState";
+import Loading from "../components/ui/Loading";
+import { useAuth } from "../context/AuthContext";
 import "./NotificationsPage.css";
 
-// Mock user id until real auth exists — same convention used
-// across the app (see RoleContext.jsx).
-const MOCK_USER_ID = 1;
-
 export default function NotificationsPage() {
+  const { userId } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const load = () => {
+    if (!userId) return;
     setLoading(true);
-    getNotifications(MOCK_USER_ID)
+    getNotifications(userId)
       .then((data) => {
         setNotifications(data);
         setError(null);
@@ -24,7 +24,7 @@ export default function NotificationsPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(load, []);
+  useEffect(load, [userId]);
 
   const handleMarkRead = (id) => {
     markAsRead(id).then(load);
@@ -34,7 +34,7 @@ export default function NotificationsPage() {
     <div>
       <h1 style={{ marginBottom: "1.5rem" }}>Notifications</h1>
 
-      {loading && <p className="muted">Loading...</p>}
+      {loading && <Loading />}
       {error && <p className="dashboard-error">{error}</p>}
 
       {!loading && !error && notifications.length === 0 && (
