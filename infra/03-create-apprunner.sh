@@ -2,6 +2,10 @@
 # Create / update AWS App Runner service for the MIS API.
 # Prerequisites: infra/out/rds.env and infra/out/ecr.env from prior scripts.
 # Usage: ./infra/03-create-apprunner.sh
+#
+# Note: Many Free-plan AWS accounts return SubscriptionRequiredException for App Runner.
+# Prefer ./infra/07-deploy-ec2.sh unless App Runner is unlocked on the account.
+# rds.env must single-quote DB_URL (see 01-create-rds.sh) so JDBC & params survive `source`.
 
 set -euo pipefail
 
@@ -9,10 +13,21 @@ AWS_REGION="${AWS_REGION:-us-east-1}"
 SERVICE_NAME="${SERVICE_NAME:-university-mis-api}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
+if [[ ! -f "$ROOT/infra/out/rds.env" || ! -f "$ROOT/infra/out/ecr.env" ]]; then
+  echo "ERROR: Need infra/out/rds.env and infra/out/ecr.env (run 01 + 02 first)." >&2
+  exit 1
+fi
+
 # shellcheck disable=SC1091
 source "$ROOT/infra/out/rds.env"
 # shellcheck disable=SC1091
 source "$ROOT/infra/out/ecr.env"
+
+if [[ -z "${DB_URL:-}" ]]; then
+  echo "ERROR: DB_URL empty after sourcing rds.env." >&2
+  echo "       Re-run ./infra/01-create-rds.sh so DB_URL is written with single quotes." >&2
+  exit 1
+fi
 
 JWT_SECRET="${JWT_SECRET:-$(openssl rand -base64 48 | tr -d '\n')}"
 CORS_ORIGINS="${CORS_ORIGINS:-http://localhost:3000,http://localhost:3002}"
@@ -72,8 +87,21 @@ cfg = {
 print(json.dumps(cfg))
 PY
 
+apprunner_err() {
+  local msg="$1"
+  if echo "$msg" | grep -qi 'SubscriptionRequiredException'; then
+    echo "ERROR: App Runner is not available on this AWS account (SubscriptionRequiredException)." >&2
+    echo "       Free-plan accounts often block App Runner. Use EC2 instead:" >&2
+    echo "         EC2_HOST=<eip> EC2_PEM=~/path/to.pem ./infra/07-deploy-ec2.sh" >&2
+    echo "       Or upgrade the account plan, then re-run this script." >&2
+    return 0
+  fi
+  return 1
+}
+
 if [[ -z "$EXISTING" || "$EXISTING" == "None" ]]; then
   echo "==> Creating App Runner service $SERVICE_NAME"
+  set +e
   CREATE_OUT=$(aws apprunner create-service --region "$AWS_REGION" \
     --service-name "$SERVICE_NAME" \
     --source-configuration file:///tmp/apprunner-source.json \
@@ -85,13 +113,33 @@ if [[ -z "$EXISTING" || "$EXISTING" == "None" ]]; then
       "HealthyThreshold": 1,
       "UnhealthyThreshold": 5
     }' \
-    --instance-configuration '{"Cpu":"1024","Memory":"2048"}')
+    --instance-configuration '{"Cpu":"1024","Memory":"2048"}' 2>&1)
+  CREATE_RC=$?
+  set -e
+  if [[ $CREATE_RC -ne 0 ]]; then
+    echo "$CREATE_OUT" >&2
+    if apprunner_err "$CREATE_OUT"; then
+      exit 1
+    fi
+    exit "$CREATE_RC"
+  fi
   SERVICE_ARN=$(echo "$CREATE_OUT" | python3 -c "import sys,json; print(json.load(sys.stdin)['Service']['ServiceArn'])")
 else
   SERVICE_ARN="$EXISTING"
   echo "==> App Runner service exists: $SERVICE_ARN — applying latest image/env"
-  aws apprunner update-service --region "$AWS_REGION" --service-arn "$SERVICE_ARN" \
-    --source-configuration file:///tmp/apprunner-source.json >/dev/null || true
+  set +e
+  UPDATE_OUT=$(aws apprunner update-service --region "$AWS_REGION" --service-arn "$SERVICE_ARN" \
+    --source-configuration file:///tmp/apprunner-source.json 2>&1)
+  UPDATE_RC=$?
+  set -e
+  if [[ $UPDATE_RC -ne 0 ]]; then
+    echo "$UPDATE_OUT" >&2
+    if apprunner_err "$UPDATE_OUT"; then
+      exit 1
+    fi
+    # Non-subscription failures on update: keep prior behavior soft
+    true
+  fi
 fi
 
 echo "==> Waiting for service RUNNING (can take several minutes)..."

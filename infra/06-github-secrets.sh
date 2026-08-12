@@ -23,6 +23,19 @@ source "$ROOT/infra/out/apprunner.env"
 # shellcheck disable=SC1091
 source "$ROOT/infra/out/frontend.env"
 
+REACT_APP_API_URL="${REACT_APP_API_URL:-${API_BASE:-}}"
+EC2_HOST="${EC2_HOST:-}"
+if [[ -z "$EC2_HOST" && -n "${SERVICE_URL:-}" ]]; then
+  EC2_HOST="${SERVICE_URL#http://}"
+  EC2_HOST="${EC2_HOST#https://}"
+  EC2_HOST="${EC2_HOST%%:*}"
+fi
+EC2_PEM="${EC2_PEM:-${EC2_SSH_KEY_FILE:-$HOME/Downloads/university-mis-api.pem}}"
+ROLE_ARN="${AWS_ROLE_ARN:-}"
+if [[ -z "$ROLE_ARN" && -f "$ROOT/infra/out/gha-role.arn" ]]; then
+  ROLE_ARN="$(tr -d '[:space:]' < "$ROOT/infra/out/gha-role.arn")"
+fi
+
 cat <<EOF
 GitHub repo secrets / variables to configure:
 
@@ -30,11 +43,11 @@ GitHub repo secrets / variables to configure:
 
   Secret ECR_REPOSITORY = $ECR_REPO
   Secret S3_BUCKET = $S3_BUCKET
-  Secret CLOUDFRONT_DISTRIBUTION_ID = $CLOUDFRONT_DISTRIBUTION_ID
   Secret REACT_APP_API_URL = $REACT_APP_API_URL
-
-  Secret AWS_ROLE_ARN = <create IAM OIDC role for GitHub Actions, or use access keys>
-    Example trust for repo owner/name with OIDC provider token.actions.githubusercontent.com
+  Secret EC2_HOST = $EC2_HOST
+  Secret EC2_SSH_KEY = <PEM contents from $EC2_PEM>
+  Secret AWS_ROLE_ARN = ${ROLE_ARN:-<create IAM OIDC role GitHubActionsMisDeploy>}
+  Secret CLOUDFRONT_DISTRIBUTION_ID = (omit unless real CloudFront ID; do not use n/a-*)
 
 EOF
 
@@ -46,8 +59,23 @@ if [[ "$APPLY" == true ]]; then
   gh variable set AWS_REGION --body "$AWS_REGION"
   gh secret set ECR_REPOSITORY --body "$ECR_REPO"
   gh secret set S3_BUCKET --body "$S3_BUCKET"
-  gh secret set CLOUDFRONT_DISTRIBUTION_ID --body "$CLOUDFRONT_DISTRIBUTION_ID"
   gh secret set REACT_APP_API_URL --body "$REACT_APP_API_URL"
-  echo "==> Set ECR_REPOSITORY, S3_BUCKET, CLOUDFRONT_DISTRIBUTION_ID, REACT_APP_API_URL, AWS_REGION"
-  echo "==> Still set AWS_ROLE_ARN manually (OIDC role ARN)."
+  if [[ -n "$EC2_HOST" ]]; then
+    gh secret set EC2_HOST --body "$EC2_HOST"
+  fi
+  if [[ -f "$EC2_PEM" ]]; then
+    gh secret set EC2_SSH_KEY < "$EC2_PEM"
+  else
+    echo "WARN: PEM not found at $EC2_PEM — set EC2_SSH_KEY manually" >&2
+  fi
+  if [[ -n "$ROLE_ARN" ]]; then
+    gh secret set AWS_ROLE_ARN --body "$ROLE_ARN"
+  else
+    echo "WARN: AWS_ROLE_ARN missing — set after creating GitHubActionsMisDeploy" >&2
+  fi
+  # Never push placeholder CloudFront IDs
+  if [[ -n "${CLOUDFRONT_DISTRIBUTION_ID:-}" && "$CLOUDFRONT_DISTRIBUTION_ID" != n/a* ]]; then
+    gh secret set CLOUDFRONT_DISTRIBUTION_ID --body "$CLOUDFRONT_DISTRIBUTION_ID"
+  fi
+  echo "==> Applied GitHub Actions secrets/variables for EC2 + S3 deploy path"
 fi

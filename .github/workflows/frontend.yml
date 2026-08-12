@@ -66,6 +66,12 @@ jobs:
           npm ci
           npm run build
           aws s3 sync build/ "s3://${S3_BUCKET}" --delete
-          if [ -n "$CLOUDFRONT_DISTRIBUTION_ID" ]; then
-            aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/*"
+          # Skip placeholders like n/a-s3-website; only real distribution IDs.
+          if [ -n "${CLOUDFRONT_DISTRIBUTION_ID}" ] \
+            && [[ "${CLOUDFRONT_DISTRIBUTION_ID}" != n/a* ]]; then
+            aws cloudfront create-invalidation \
+              --distribution-id "${CLOUDFRONT_DISTRIBUTION_ID}" \
+              --paths "/*"
+          else
+            echo "Skipping CloudFront invalidation (CLOUDFRONT_DISTRIBUTION_ID unset or n/a*)"
           fi
