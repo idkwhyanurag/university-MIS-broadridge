@@ -42,6 +42,11 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    env:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      S3_BUCKET: ${{ secrets.S3_BUCKET }}
+      REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -50,18 +55,14 @@ jobs:
           cache: npm
           cache-dependency-path: mis-frontend/package-lock.json
       - name: Configure AWS credentials
-        if: ${{ secrets.AWS_ROLE_ARN != '' }}
+        if: env.AWS_ROLE_ARN != ''
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
       - name: Build and sync to S3
-        if: ${{ secrets.AWS_ROLE_ARN != '' && secrets.S3_BUCKET != '' }}
+        if: env.AWS_ROLE_ARN != '' && env.S3_BUCKET != ''
         working-directory: mis-frontend
-        env:
-          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
-          S3_BUCKET: ${{ secrets.S3_BUCKET }}
-          CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
         run: |
           npm ci
           npm run build
