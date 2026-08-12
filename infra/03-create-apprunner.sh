@@ -43,45 +43,40 @@ EOF
   sleep 15
 fi
 
-RUNTIME_ENV=$(cat <<EOF
-[
-  {"Name":"DB_URL","Value":"$DB_URL"},
-  {"Name":"DB_USER","Value":"$DB_USER"},
-  {"Name":"DB_PASSWORD","Value":"$DB_PASSWORD"},
-  {"Name":"JWT_SECRET","Value":"$JWT_SECRET"},
-  {"Name":"CORS_ORIGINS","Value":"$CORS_ORIGINS"},
-  {"Name":"PORT","Value":"8080"}
-]
-EOF
-)
-
 EXISTING=$(aws apprunner list-services --region "$AWS_REGION" \
   --query "ServiceSummaryList[?ServiceName=='$SERVICE_NAME'].ServiceArn | [0]" \
   --output text 2>/dev/null || echo "None")
+
+export ROLE_ARN ECR_IMAGE DB_URL DB_USER DB_PASSWORD JWT_SECRET CORS_ORIGINS
+python3 - <<'PY' > /tmp/apprunner-source.json
+import json, os
+cfg = {
+  "AuthenticationConfiguration": {"AccessRoleArn": os.environ["ROLE_ARN"]},
+  "AutoDeploymentsEnabled": True,
+  "ImageRepository": {
+    "ImageIdentifier": os.environ["ECR_IMAGE"],
+    "ImageRepositoryType": "ECR",
+    "ImageConfiguration": {
+      "Port": "8080",
+      "RuntimeEnvironmentVariables": {
+        "DB_URL": os.environ["DB_URL"],
+        "DB_USER": os.environ["DB_USER"],
+        "DB_PASSWORD": os.environ["DB_PASSWORD"],
+        "JWT_SECRET": os.environ["JWT_SECRET"],
+        "CORS_ORIGINS": os.environ["CORS_ORIGINS"],
+        "PORT": "8080",
+      },
+    },
+  },
+}
+print(json.dumps(cfg))
+PY
 
 if [[ -z "$EXISTING" || "$EXISTING" == "None" ]]; then
   echo "==> Creating App Runner service $SERVICE_NAME"
   CREATE_OUT=$(aws apprunner create-service --region "$AWS_REGION" \
     --service-name "$SERVICE_NAME" \
-    --source-configuration "{
-      \"AuthenticationConfiguration\": {\"AccessRoleArn\": \"$ROLE_ARN\"},
-      \"AutoDeploymentsEnabled\": true,
-      \"ImageRepository\": {
-        \"ImageIdentifier\": \"$ECR_IMAGE\",
-        \"ImageRepositoryType\": \"ECR\",
-        \"ImageConfiguration\": {
-          \"Port\": \"8080\",
-          \"RuntimeEnvironmentVariables\": {
-            \"DB_URL\": \"$DB_URL\",
-            \"DB_USER\": \"$DB_USER\",
-            \"DB_PASSWORD\": \"$DB_PASSWORD\",
-            \"JWT_SECRET\": \"$JWT_SECRET\",
-            \"CORS_ORIGINS\": \"$CORS_ORIGINS\",
-            \"PORT\": \"8080\"
-          }
-        }
-      }
-    }" \
+    --source-configuration file:///tmp/apprunner-source.json \
     --health-check-configuration '{
       "Protocol": "HTTP",
       "Path": "/actuator/health",
@@ -94,7 +89,9 @@ if [[ -z "$EXISTING" || "$EXISTING" == "None" ]]; then
   SERVICE_ARN=$(echo "$CREATE_OUT" | python3 -c "import sys,json; print(json.load(sys.stdin)['Service']['ServiceArn'])")
 else
   SERVICE_ARN="$EXISTING"
-  echo "==> App Runner service exists: $SERVICE_ARN"
+  echo "==> App Runner service exists: $SERVICE_ARN — applying latest image/env"
+  aws apprunner update-service --region "$AWS_REGION" --service-arn "$SERVICE_ARN" \
+    --source-configuration file:///tmp/apprunner-source.json >/dev/null || true
 fi
 
 echo "==> Waiting for service RUNNING (can take several minutes)..."
