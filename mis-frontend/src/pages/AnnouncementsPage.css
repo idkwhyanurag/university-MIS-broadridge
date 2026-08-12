@@ -1,0 +1,83 @@
+.announcement-form-card {
+  margin-bottom: var(--space-5);
+}
+
+.announcement-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.announcement-form input,
+.announcement-form textarea,
+.announcement-form select {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-hairline);
+  border-radius: var(--radius-sm);
+  color: var(--ink-900);
+}
+
+.announcement-form textarea {
+  resize: vertical;
+}
+
+.announcement-form-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.post-btn {
+  background: var(--brass-500);
+  color: #fff;
+  border: none;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.post-btn:hover {
+  background: var(--ink-800);
+}
+
+.announcement-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.announcement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.announcement-header h3 {
+  font-size: var(--text-base);
+  margin: 0 0 var(--space-2);
+}
+
+.announcement-body {
+  font-size: var(--text-sm);
+  color: var(--slate-600);
+  margin: 0 0 var(--space-2);
+}
+
+.delete-btn {
+  background: none;
+  border: 1px solid var(--crimson-100);
+  color: var(--crimson-600);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.delete-btn:hover {
+  background: var(--crimson-100);
+}

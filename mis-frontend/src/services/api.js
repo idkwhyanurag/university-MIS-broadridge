@@ -1,17 +1,29 @@
 import axios from "axios";
 
-// Base URL for the Spring Boot backend. Update once deployed to EC2.
 const api = axios.create({
-  baseURL: "http://localhost:8080/api",
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:8080/api",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  timeout: 10000,
 });
 
-// Attaches the JWT (once Person 1's auth module is wired in) to every request.
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error("API Error:", error);
+
+    if (error.response) {
+      console.error("Status:", error.response.status);
+      console.error("Data:", error.response.data);
+    } else if (error.request) {
+      console.error("No response received from backend.");
+    } else {
+      console.error("Request error:", error.message);
+    }
+
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
 export default api;
